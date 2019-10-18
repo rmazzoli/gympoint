@@ -11,6 +11,7 @@ class UserController {
       password: Yup.string()
         .required()
         .min(6),
+      admin: Yup.boolean().required(),
     });
 
     if (!(await schema.isValid(req.body))) {
@@ -54,9 +55,13 @@ class UserController {
 
     const { email, oldPassword } = req.body;
 
-    const user = await User.findByPk(req.userId);
+    const user = await User.findByPk(req.params.id);
 
-    if (email !== user.email) {
+    if (!user) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    if (email && email !== user.email) {
       const userExists = await User.findOne({
         where: { email },
       });
@@ -70,13 +75,13 @@ class UserController {
       return res.status(401).json({ error: 'Password does not match' });
     }
 
-    const { id, name, provider } = await user.update(req.body);
+    const { id, name, admin } = await user.update(req.body);
 
     return res.json({
       id,
       name,
       email,
-      provider,
+      admin,
     });
   }
 }
